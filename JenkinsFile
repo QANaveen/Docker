@@ -1,0 +1,39 @@
+pipeline {
+    agent any
+    
+    environment { 
+      NAME = "myapp"
+      VERSION = "${env.BUILD_ID}-${env.GIT_COMMIT}"
+      //IMAGE = "${NAME}:${currentBuild.number}"   [we can use imagename:jenkins build number]
+      //IMAGE = "${NAME}:${VERSION}"               [we can use imagename:git version number]
+      IMAGE = "${NAME}:${currentBuild.number}"
+   }
+
+    stages {
+        stage('workspace_cleanup') {
+            steps {
+                cleanWs()
+            }
+        }
+        stage('clone') {
+            steps {
+                git branch: 'main', url: 'https://Naveen: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@github.com/snaveenkpn/nodeapp.git'
+            }
+        }
+        stage('Docker_image') {
+            steps {
+               bat "docker build -t $IMAGE ."
+            }
+        }
+        stage('providing Docker hub tag to image') {
+            steps {
+                bat "docker tag $IMAGE snaveenkpn/nodeapp:$currentBuild.number"
+            }
+        }
+        stage('push image to docker hub') {
+            steps {
+                bat "docker push snaveenkpn/jenkins:${currentBuild.number}"
+            }
+        }
+    }
+}
